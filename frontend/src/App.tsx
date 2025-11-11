@@ -6,7 +6,6 @@ import { PublicRoute } from './router/PublicRoute';
 import LoginPage from './pages/LoginPage';
 import MainPage from './pages/MainPage'; 
 
-// --- ¡Importa el componente de Detalle real! ---
 import DetailPage from './pages/DetailPage'; 
 
 function App() {
@@ -19,8 +18,6 @@ function App() {
                     </Route>
                     <Route element={<ProtectedRoute />}>
                         <Route path="/" element={<MainPage />} /> 
-                        
-                        {/* --- Ruta de Detalle Actualizada --- */}
                         <Route path="/pokemon/:id" element={<DetailPage />} />
                     </Route>
                 </Routes>

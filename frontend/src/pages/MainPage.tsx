@@ -1,21 +1,20 @@
 // /frontend/src/pages/MainPage.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Container, Row, Col, Button, Spinner, Alert, Form, InputGroup } from 'react-bootstrap';
+import { Container, Row, Col, Button, Spinner, Alert, Form, InputGroup, Pagination } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
 import type { PokemonListItem, PaginatedPokemonResponse } from '../types';
-import api from '../api/axios'; // Nuestro cliente de API
+import api from '../api/axios'; 
 import PokemonCard from '../components/PokemonCard';
 
-// --- Funciones Helper (Ayudantes) ---
 const POKEMON_IMAGE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/';
+const POKEMONS_PER_PAGE = 20; 
 
-// Extrae el ID de la URL (ej. "https://pokeapi.co/api/v2/pokemon/1/")
 const extractPokemonId = (url: string): number => {
     const parts = url.split('/').filter(Boolean);
     return Number(parts[parts.length - 1]);
 };
 
-// Transforma la data cruda de la API a nuestro tipo PokemonListItem
 const transformPokemonData = (data: { name: string; url: string }[]): PokemonListItem[] => {
     return data.map(p => {
         const id = extractPokemonId(p.url);
@@ -27,57 +26,53 @@ const transformPokemonData = (data: { name: string; url: string }[]): PokemonLis
     });
 };
 
-// --- Componente Principal ---
 const MainPage: React.FC = () => {
     const { logout } = useAuth();
-    
-    // Estados de la data
+    const [searchParams, setSearchParams] = useSearchParams();
+    const urlPage = Number(searchParams.get('page')) || 1;
+    const [currentPage, setCurrentPage] = useState(urlPage);
     const [allPokemons, setAllPokemons] = useState<PokemonListItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Estados de paginación
-    const [nextUrl, setNextUrl] = useState<string | null>(null);
-    const [prevUrl, setPrevUrl] = useState<string | null>(null);
-
-    // Estados de filtros
+    const [totalCount, setTotalCount] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOrder, setSortOrder] = useState<'name' | 'id'>('id');
+    const totalPages = Math.ceil(totalCount / POKEMONS_PER_PAGE);
 
-    // Función para cargar Pokémon
-    // Usamos 'offset' y 'limit' para el fetch inicial
-    const fetchPokemons = async (url: string = '/pokemons?limit=20&offset=0') => {
+    const handlePageChange = (page: number) => {
+        if (page < 1 || page > totalPages) return;
+        searchParams.set('page', page.toString());
+        setSearchParams(searchParams, { replace: true });
+        setCurrentPage(page); 
+    };
+
+    const fetchPokemons = async (page: number) => {
+        if (page < 1) page = 1;
+        const offset = (page - 1) * POKEMONS_PER_PAGE;
+        const url = `/pokemons?limit=${POKEMONS_PER_PAGE}&offset=${offset}`;
+
         setLoading(true);
         setError(null);
         try {
-            // Llama a nuestro backend GET /api/pokemons
             const response = await api.get<PaginatedPokemonResponse>(url);
-            
-            // Guardamos la data transformada
             setAllPokemons(transformPokemonData(response.data.results));
-            
-            // Guardamos las URLs de paginación (relativas a nuestra API)
-            setNextUrl(response.data.next ? response.data.next.replace('https://pokeapi.co/api/v2', '') : null);
-            setPrevUrl(response.data.previous ? response.data.previous.replace('https://pokeapi.co/api/v2', '') : null);
+            setTotalCount(response.data.count);
 
         } catch (err) {
-            console.error("Error al cargar los Pokémon:", err);
-            setError('Error al cargar los Pokémon. Intenta recargar la página.');
+            setError('Error loading Pokémon. Please try reloading the page.');
+            console.error("Error loading Pokémon:", err);
         } finally {
             setLoading(false);
         };
     }
 
-    // Carga inicial al montar el componente
     useEffect(() => {
-        fetchPokemons();
-    }, []);
+        const pageFromUrl = Number(searchParams.get('page')) || 1;
+        setCurrentPage(pageFromUrl);
+        
+        fetchPokemons(pageFromUrl);
+    }, [searchParams]);
 
-    // Lógica de Paginación
-    const handleNext = () => nextUrl && fetchPokemons(nextUrl);
-    const handlePrevious = () => prevUrl && fetchPokemons(prevUrl);
-
-    // Lógica de Filtro y Ordenamiento (con useMemo para optimizar)
     const filteredAndSortedPokemons = useMemo(() => {
         return allPokemons
             .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -85,32 +80,79 @@ const MainPage: React.FC = () => {
                 if (sortOrder === 'name') {
                     return a.name.localeCompare(b.name);
                 }
-                return a.id - b.id; // Orden por ID (número)
+                return a.id - b.id;
             });
     }, [allPokemons, searchTerm, sortOrder]);
 
+    const renderPaginationItems = () => {
+        if (totalPages <= 1) return null;
+
+        const items = [];
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+        
+        if (endPage - startPage < maxVisiblePages - 1) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+
+        items.push(
+            <Pagination.First key="first" onClick={() => handlePageChange(1)} disabled={currentPage === 1} />,
+            <Pagination.Prev key="prev" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+        );
+
+        if (startPage > 1) {
+            items.push(<Pagination.Ellipsis key="startEllipsis" disabled />);
+        }
+
+        for (let number = startPage; number <= endPage; number++) {
+            items.push(
+                <Pagination.Item 
+                    key={number} 
+                    active={number === currentPage} 
+                    onClick={() => handlePageChange(number)}
+                >
+                    {number}
+                </Pagination.Item>,
+            );
+        }
+
+        if (endPage < totalPages) {
+            items.push(<Pagination.Ellipsis key="endEllipsis" disabled />);
+        }
+
+        items.push(
+            <Pagination.Next key="next" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />,
+            <Pagination.Last key="last" onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
+        );
+
+
+        return (
+            <Pagination className="justify-content-center flex-wrap">
+                {items}
+            </Pagination>
+        );
+    };
 
     return (
         <Container className="py-4">
-            {/* --- Header y Logout --- */}
             <Row className="mb-4 align-items-center">
                 <Col>
                     <h1>Pokédex</h1>
                 </Col>
                 <Col md="auto">
                     <Button onClick={logout} variant="outline-secondary">
-                        Cerrar Sesión
+                        Close Session
                     </Button>
                 </Col>
             </Row>
 
-            {/* --- Controles de Búsqueda y Ordenamiento --- */}
             <Row className="mb-4 g-3">
                 <Col md={8}>
                     <InputGroup>
-                        <InputGroup.Text>Buscar:</InputGroup.Text>
+                        <InputGroup.Text>Find:</InputGroup.Text>
                         <Form.Control
-                            placeholder="Buscar por nombre..."
+                            placeholder="Find by Name..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -118,22 +160,29 @@ const MainPage: React.FC = () => {
                 </Col>
                 <Col md={4}>
                     <InputGroup>
-                        <InputGroup.Text>Ordenar por:</InputGroup.Text>
+                        <InputGroup.Text>Filter by:</InputGroup.Text>
                         <Form.Select
                             value={sortOrder}
                             onChange={(e) => setSortOrder(e.target.value as 'name' | 'id')}
                         >
-                            <option value="id">Número (ID)</option>
-                            <option value="name">Nombre (A-Z)</option>
+                            <option value="id">Number (ID)</option>
+                            <option value="name">Name (A-Z)</option>
                         </Form.Select>
                     </InputGroup>
                 </Col>
             </Row>
             
-            {/* --- Contenido: Loading, Error o Lista --- */}
+            {totalCount > 0 && !loading && !error && (
+                <Row className="mb-4 d-none">
+                    <Col className="text-center">
+                        <p className="fs-5">Page **{currentPage}** of **{totalPages}**</p>
+                    </Col>
+                </Row>
+            )}
+
             {loading ? (
                 <div className="text-center">
-                    <Spinner animation="border" /> <span>Cargando...</span>
+                    <Spinner animation="border" /> <span>Loading...</span>
                 </div>
             ) : error ? (
                 <Alert variant="danger">{error}</Alert>
@@ -148,15 +197,9 @@ const MainPage: React.FC = () => {
                         ))}
                     </Row>
 
-                    {/* --- Controles de Paginación --- */}
                     <Row className="mt-4">
-                        <Col className="d-flex justify-content-between">
-                            <Button onClick={handlePrevious} disabled={!prevUrl}>
-                                &laquo; Anterior
-                            </Button>
-                            <Button onClick={handleNext} disabled={!nextUrl}>
-                                Siguiente &raquo;
-                            </Button>
+                        <Col>
+                            {renderPaginationItems()}
                         </Col>
                     </Row>
                 </>

@@ -1,0 +1,35 @@
+# -------------------------
+# IGNORE GLOBAL FILES
+# -------------------------
+.DS_Store
+.env
+.env.*
+npm-debug.log
+yarn-error.log
+
+# -------------------------
+# DEPENDENCIES
+# -------------------------
+/node_modules
+
+# -------------------------
+# BACKEND (Node.js/Express)
+# -------------------------
+# Ignorar los logs de producción o errores (si los hubiera)
+/backend/logs
+/backend/dist
+
+# -------------------------
+# FRONTEND (React/Vite/TypeScript)
+# -------------------------
+
+# Directorio de salida de la compilación de Vite
+/frontend/dist
+
+# Directorios de caché y temporales de TypeScript
+/frontend/node_modules/.tmp
+/frontend/node_modules/.vite
+/frontend/tsconfig.tsbuildinfo
+
+# Archivos de reportes de cobertura de tests (Vitest)
+/frontend/coverage

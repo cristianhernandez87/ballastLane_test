@@ -6,7 +6,6 @@ import type { PokemonDetail } from '../types';
 import api from '../api/axios';
 
 const DetailPage: React.FC = () => {
-    // Obtenemos el 'id' de la URL (ej. /pokemon/25)
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
@@ -19,7 +18,6 @@ const DetailPage: React.FC = () => {
             setLoading(true);
             setError(null);
             try {
-                // Llama a nuestro backend GET /api/pokemons/:id
                 const response = await api.get<PokemonDetail>(`/pokemons/${id}`);
                 setPokemon(response.data);
             } catch (err) {
@@ -33,14 +31,12 @@ const DetailPage: React.FC = () => {
         if (id) {
             fetchPokemonDetail();
         }
-    }, [id]); // Se ejecuta cada vez que el 'id' de la URL cambia
-
-    // --- Renderizado ---
+    }, [id]);
 
     if (loading) {
         return (
             <Container className="text-center py-5">
-                <Spinner animation="border" /> <span>Cargando detalle...</span>
+                <Spinner animation="border" /> <span>Loading details...</span>
             </Container>
         );
     }
@@ -49,21 +45,20 @@ const DetailPage: React.FC = () => {
         return (
             <Container className="py-5">
                 <Alert variant="danger">{error}</Alert>
-                <Button variant="secondary" onClick={() => navigate('/')}>Volver al Listado</Button>
+                <Button variant="secondary" onClick={() => navigate('/')}>Back to list</Button>
             </Container>
         );
     }
 
-    if (!pokemon) return null; // No renderiza nada si no hay Pokémon
+    if (!pokemon) return null; 
 
     return (
         <Container className="py-4">
             <Button variant="outline-secondary" onClick={() => navigate('/')} className="mb-3">
-                &laquo; Volver al Listado
+                &laquo; Back to list
             </Button>
 
             <Row>
-                {/* Columna de Imagen y Datos Básicos */}
                 <Col md={4}>
                     <Card className="text-center shadow-sm">
                         <Card.Img 
@@ -79,16 +74,14 @@ const DetailPage: React.FC = () => {
                             <Card.Text className="text-muted fs-4">
                                 #{String(pokemon.id).padStart(3, '0')}
                             </Card.Text>
-                            <p>Peso: {pokemon.weight / 10} kg | Altura: {pokemon.height / 10} m</p>
+                            <p>Size: {pokemon.weight / 10} kg | Heigh: {pokemon.height / 10} m</p>
                         </Card.Body>
                     </Card>
                 </Col>
 
-                {/* Columna de Habilidades, Movimientos y Formas */}
                 <Col md={8}>
-                    [cite_start]{/* Habilidades [cite: 24] */}
                     <Card className="mb-3 shadow-sm">
-                        <Card.Header as="h5">Habilidades</Card.Header>
+                        <Card.Header as="h5">Skills</Card.Header>
                         <ListGroup variant="flush">
                             {pokemon.abilities.map((a, index) => (
                                 <ListGroup.Item key={index} className="text-capitalize">
@@ -98,9 +91,8 @@ const DetailPage: React.FC = () => {
                         </ListGroup>
                     </Card>
 
-                    [cite_start]{/* Formas [cite: 24] */}
                     <Card className="mb-3 shadow-sm">
-                        <Card.Header as="h5">Formas</Card.Header>
+                        <Card.Header as="h5">Form</Card.Header>
                         <ListGroup variant="flush">
                             {pokemon.forms.map((f, index) => (
                                 <ListGroup.Item key={index} className="text-capitalize">
@@ -110,9 +102,8 @@ const DetailPage: React.FC = () => {
                         </ListGroup>
                     </Card>
 
-                    [cite_start]{/* Movimientos (limitado para no saturar) [cite: 24] */}
                     <Card className="shadow-sm">
-                        <Card.Header as="h5">Movimientos (Primeros 10)</Card.Header>
+                        <Card.Header as="h5">Movements (First 10 steps)</Card.Header>
                         <Card.Body style={{ maxHeight: '300px', overflowY: 'auto' }}>
                             {pokemon.moves.slice(0, 10).map((m, index) => (
                                 <Badge pill bg="secondary" key={index} className="m-1 p-2 text-capitalize">
@@ -120,7 +111,7 @@ const DetailPage: React.FC = () => {
                                 </Badge>
                             ))}
                             {pokemon.moves.length > 10 && (
-                                <p className="text-muted mt-2">...y {pokemon.moves.length - 10} más.</p>
+                                <p className="text-muted mt-2">...y {pokemon.moves.length - 10} more.</p>
                             )}
                         </Card.Body>
                     </Card>

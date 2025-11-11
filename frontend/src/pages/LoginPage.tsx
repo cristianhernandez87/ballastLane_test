@@ -15,7 +15,6 @@ const LoginPage: React.FC = () => {
         e.preventDefault();
         setError('');
 
-        // Validación de campos vacíos [cite: 12]
         if (!username || !password) {
             setError('Usuario y contraseña son requeridos.');
             return;
@@ -24,9 +23,8 @@ const LoginPage: React.FC = () => {
         const success = await login(username, password);
 
         if (success) {
-            navigate('/'); // Redirige al Home (MainPage)
+            navigate('/'); 
         } else {
-            // Validación de credenciales incorrectas [cite: 12]
             setError('Credenciales incorrectas. (Pista: admin/admin)');
         }
     };
@@ -43,7 +41,7 @@ const LoginPage: React.FC = () => {
                     
                     <Form onSubmit={handleSubmit}>
                         <Form.Group className="mb-3" controlId="formUsername">
-                            <Form.Label>Usuario</Form.Label>
+                            <Form.Label>User</Form.Label>
                             <Form.Control
                                 type="text"
                                 placeholder="admin"
@@ -53,7 +51,7 @@ const LoginPage: React.FC = () => {
                         </Form.Group>
 
                         <Form.Group className="mb-3" controlId="formPassword">
-                            <Form.Label>Contraseña</Form.Label>
+                            <Form.Label>Password</Form.Label>
                             <Form.Control
                                 type="password"
                                 placeholder="admin"
@@ -63,7 +61,7 @@ const LoginPage: React.FC = () => {
                         </Form.Group>
 
                         <Button variant="primary" type="submit" className="w-100">
-                            Ingresar
+                            Login
                         </Button>
                     </Form>
                 </Card.Body>

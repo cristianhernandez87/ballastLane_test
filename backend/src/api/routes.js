@@ -5,9 +5,6 @@ const router = express.Router();
 
 const POKEAPI_BASE_URL = 'https://pokeapi.co/api/v2';
 
-/**
- * 1. Endpoint de Login
- */
 router.post('/login', (req, res) => {
     const { username, password } = req.body;
 
@@ -24,9 +21,6 @@ router.post('/login', (req, res) => {
     }
 });
 
-/**
- * 2. Endpoint de Listado de Pokémon (Paginado)
- */
 router.get('/pokemons', async (req, res) => {
     try {
         const { limit, offset } = req.query;
@@ -38,23 +32,19 @@ router.get('/pokemons', async (req, res) => {
         res.json(response.data);
 
     } catch (error) {
-        console.error('Error al obtener el listado de pokémon:', error.message);
+        console.error('Error loading Pokémon. Please try reloading the page:', error.message);
         res.status(500).json({
             success: false,
-            message: 'Error en el servidor al contactar PokeAPI.'
+            message: 'Error server loading PokeAPI.'
         });
     }
 });
 
-/**
- * 3. Endpoint de Detalle de Pokémon (Corregido)
- */
 router.get('/pokemons/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const response = await axios.get(`${POKEAPI_BASE_URL}/pokemon/${id}`);
         
-        // Campos que el Frontend necesita:
         const { 
             abilities, 
             moves, 
@@ -66,7 +56,6 @@ router.get('/pokemons/:id', async (req, res) => {
             weight 
         } = response.data;
         
-        // Devolvemos solo esos campos
         res.json({ 
             abilities, 
             moves, 
@@ -79,22 +68,19 @@ router.get('/pokemons/:id', async (req, res) => {
         });
 
     } catch (error) {
-        console.error(`Error al obtener detalle de pokémon ${req.params.id}:`, error.message);
-        
-        // Lógica de error corregida:
+        console.error(`Error loading Pokémon: ${req.params.id}:`, error.message);
         if (error.response && error.response.status === 404) {
             res.status(404).json({
                 success: false,
-                message: 'Pokémon no encontrado.'
+                message: 'Pokémon no found.'
             });
         } else {
             res.status(500).json({
                 success: false,
-                message: 'Error en el servidor al contactar PokeAPI.'
+                message: 'Error server PokeAPI.'
             });
         }
     }
 });
 
-// Asegúrate de que esto esté al final del archivo
 module.exports = router;

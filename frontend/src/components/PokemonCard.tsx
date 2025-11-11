@@ -10,7 +10,6 @@ interface PokemonCardProps {
 
 const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon }) => {
     return (
-        // Usamos Link de react-router-dom para navegar al detalle
         <Link to={`/pokemon/${pokemon.id}`} style={{ textDecoration: 'none' }}>
             <Card className="text-center shadow-sm h-100">
                 <Card.Img 
